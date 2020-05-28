@@ -7,6 +7,7 @@ using System.Linq;
 using static System.Net.Mime.MediaTypeNames;
 using System.Diagnostics;
 using System.Threading;
+using System.CodeDom;
 
 namespace LastFmStats
 {
@@ -29,6 +30,7 @@ namespace LastFmStats
             while (true)
             {
                 Console.WriteLine("S - Statistiche Generali");
+                Console.WriteLine("P - Classifica periodi di 6 mesi");
                 Console.WriteLine("R - Ricerca per traccia");
                 Console.WriteLine("RA - Ricerca per album");
                 var scelta = Console.ReadLine();
@@ -36,6 +38,9 @@ namespace LastFmStats
                 {
                     case "S":
                         MenuStatisticheGenerali();
+                        break;
+                    case "P":
+                        ClassificaPeriodiSeiMesi();
                         break;
                     case "R":
                         MenuRicercaPerTraccia();
@@ -45,6 +50,59 @@ namespace LastFmStats
                         break;
                 }
             }
+        }
+
+        private static void ClassificaPeriodiSeiMesi()
+        {
+            Scrobbles.RemoveAll(c => c.Data == new DateTime(1, 1, 1));
+            var inizio = Scrobbles.Select(c => c.Data).Min();
+            var fine = Scrobbles.Select(c => c.Data).Max();
+            var numgiorni = (fine - inizio).Days;
+            var listperiodi = new List<Periodo>();
+            var perc = 0;
+            var percold = 0;
+            for (int i = 0; i < numgiorni; i++)
+            {
+                perc = i * 100 / numgiorni;
+                if (perc!=percold)
+                {
+                    percold = perc;
+                    Console.WriteLine(perc);
+                }
+                var datainizio = inizio.AddDays(i);
+                var datafine = datainizio.AddMonths(1);
+                var numscrobbl = Scrobbles.Where(c => c.Data >= datainizio && c.Data < datafine).Count();
+                listperiodi.Add(new Periodo
+                {
+                     Inizio = datainizio,
+                     Fine = datafine,
+                     NumeroAscolti = numscrobbl
+                });
+            }
+            var primoasc = listperiodi.Select(c => c.NumeroAscolti).Max();
+            var primo = listperiodi.Where(c => c.NumeroAscolti == primoasc).FirstOrDefault();
+            listperiodi.Remove(primo);
+            var secondoasc = listperiodi.Select(c => c.NumeroAscolti).Max();
+            var secondo = listperiodi.Where(c => c.NumeroAscolti == secondoasc).FirstOrDefault();
+            listperiodi.Remove(secondo);
+            var terzoasc = listperiodi.Select(c => c.NumeroAscolti).Max();
+            var terzo = listperiodi.Where(c => c.NumeroAscolti == terzoasc).FirstOrDefault();
+            listperiodi.Remove(terzo);
+            var quartoasc = listperiodi.Select(c => c.NumeroAscolti).Max();
+            var quarto = listperiodi.Where(c => c.NumeroAscolti == quartoasc).FirstOrDefault();
+            listperiodi.Remove(quarto);
+            var quintoasc = listperiodi.Select(c => c.NumeroAscolti).Max();
+            var quinto = listperiodi.Where(c => c.NumeroAscolti == quintoasc).FirstOrDefault();
+            listperiodi.Remove(quinto);
+            var sestoasc = listperiodi.Select(c => c.NumeroAscolti).Max();
+            var sesto = listperiodi.Where(c => c.NumeroAscolti == sestoasc).FirstOrDefault();
+            listperiodi.Remove(sesto);
+            Console.WriteLine(primo);
+            Console.WriteLine(secondo);
+            Console.WriteLine(terzo);
+            Console.WriteLine(quarto);
+            Console.WriteLine(quinto);
+            Console.WriteLine(sesto);
         }
 
         private static void MenuRicercaPerAlbum()

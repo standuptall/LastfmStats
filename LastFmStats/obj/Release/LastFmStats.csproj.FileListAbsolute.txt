@@ -1,0 +1,6 @@
+C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\bin\Release\LastFmStats.exe
+C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\bin\Release\LastFmStats.pdb
+C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Release\LastFmStats.csprojAssemblyReference.cache
+C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Release\LastFmStats.csproj.CoreCompileInputs.cache
+C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Release\LastFmStats.exe
+C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Release\LastFmStats.pdb

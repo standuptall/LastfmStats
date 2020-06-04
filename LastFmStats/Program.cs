@@ -146,40 +146,65 @@ namespace LastFmStats
             Console.WriteLine("Artisti: " + artisti);
             Console.WriteLine("Album: " + album);
             Console.WriteLine("Canzoni: " + tracce);
+            Console.WriteLine("******************************************************");
             Console.WriteLine("Artista più ascoltato: " + artista);
             Console.WriteLine("Album più ascoltato: " + albumpiasc);
             Console.WriteLine("Traccia più ascoltata: " + tracciapiasc);
+            Console.WriteLine("******************GIORNI VIRTUOSI*********************");
 
-            //giorno virtuoso
-            var IGiorno = scrobbleintorange.GroupBy(c => c.Data.Date).OrderByDescending(c => c.Count()).FirstOrDefault();
-            if (IGiorno != null)
+            //giorni virtuoso
+            var IGiorni = scrobbleintorange.GroupBy(c => c.Data.Date).OrderByDescending(c => c.Count()).Take(10);
+            int count = 1;
+            foreach (var IGiorno in IGiorni)
             {
-                var giorno = IGiorno.Key;
-                Console.WriteLine("Giorno più virtuoso: {0} ({1} ascolti)", giorno.ToString("dd/MM/yyyy"), IGiorno.Count());
+                if (IGiorno != null)
+                {
+                    var giorno = IGiorno.Key;
+                    Console.WriteLine("Giorno più virtuoso #{2}: {0} ({1} ascolti)", giorno.ToString("dd/MM/yyyy"), IGiorno.Count(), count.ToString());
+                    count++;
+                }
             }
+            Console.WriteLine("******************MESI VIRTUOSI*********************");
+
+            //giorni virtuoso
+            var IMESI = scrobbleintorange.GroupBy(c => c.Data.Date.Year.ToString() + c.Data.Date.Month.ToString()).OrderByDescending(c => c.Count()).Take(10);
+            count = 1;
+            foreach (var IMese in IMESI)
+            {
+                if (IMese != null)
+                {
+                    var mese = IMese.Key;
+                    Console.WriteLine("Giorno più virtuoso #{2}: {0} ({1} ascolti)", mese, IMese.Count(), count.ToString());
+                    count++;
+                }
+            }
+            Console.WriteLine("******************TRACCE NOTTURNE*********************");
             var tracceascoltatedinotte = GetTracceAscoltateDiNotte(scrobbleintorange);
             foreach (var t in tracceascoltatedinotte)
             {
                 Console.WriteLine("{0} {1} - {2}", (NormalizzaData(t.Data)).ToString("dd/MM/yyyy HH:mm:ss"), t.Artist, t.Track);
             }
+            Console.WriteLine("******************LISTENING CLOCK*********************");
             var lc = GetListeningClock(scrobbleintorange);
             var lcheader = new string[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23" };
             var lwheader = new string[] { "Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab" };
             var lw = GetListeningWeek(scrobbleintorange);
             PrintArray(lcheader, lc);
-            Console.WriteLine(Environment.NewLine);
+            Console.WriteLine("******************LISTENING WEEK**********************");
             PrintArray(lwheader, lw);
             string[] apsheader;
             string[] apmheader;
             var aps = GetArtistiPerSettimana(scrobbleintorange, out apsheader);
-            var apm = GetArtistiPerMese(scrobbleintorange, out apmheader);
+            var apm = GetArtistiPerMese(scrobbleintorange);
+            Console.WriteLine("******************WEEKLY ARTISTS**********************");
             PrintArrayString(apsheader, aps);
-            Console.WriteLine(Environment.NewLine);
-            PrintArrayString(apmheader, apm);
+            Console.WriteLine("******************MONTHLY ARTISTS*********************");
+            foreach (var el in apm)
+                Console.WriteLine(el);
             Console.ReadLine();
         }
 
-        private static string[] GetArtistiPerMese(List<Scrobble> scrobbles, out string[] apsheader)
+        private static List<Chartelement> GetArtistiPerMese(List<Scrobble> scrobbles)
         {
             var max = scrobbles.Select(c => c.Data).Max();
             var min = scrobbles.Select(c => c.Data).Min();
@@ -188,19 +213,24 @@ namespace LastFmStats
                 primogiornomese = primogiornomese.AddDays(-1);
             var ultimogiornomese = primogiornomese.AddMonths(1);
             var getnummesi = (max - min).Days / 30 + 1;
-            var ret = new string[getnummesi];
-            apsheader = new string[getnummesi];
+            var ret = new List<Chartelement>();
             for (int i = 0; i < getnummesi; i++)
             {
-                apsheader[i] = primogiornomese.ToString("dd/MM/yyyy") + "-" + ultimogiornomese.ToString("dd/MM/yyyy");
+                var elem = new Chartelement();
+                elem.Header = primogiornomese.ToString("dd/MM/yyyy") + "-" + ultimogiornomese.ToString("dd/MM/yyyy");
                 var a = scrobbles.Where(c => c.Data >= primogiornomese && c.Data < ultimogiornomese)
                     .GroupBy(c => c.Artist)
                     .OrderByDescending(c => c.Count())
                     .FirstOrDefault();
                 if (a != null)
-                    ret[i] = a.Select(c => c.Artist).FirstOrDefault();
-                primogiornomese = primogiornomese.AddDays(7);
-                ultimogiornomese = ultimogiornomese.AddDays(7);
+                {
+                    elem.Artist = a.Select(c => c.Artist).FirstOrDefault();
+                    elem.TotalArtist = a.Where(c=>c.Artist == elem.Artist).Count();
+                }
+                elem.TotalListening = scrobbles.Where(c => c.Data >= primogiornomese && c.Data < ultimogiornomese).Count();
+                ret.Add(elem);
+                primogiornomese = primogiornomese.AddMonths(1);
+                ultimogiornomese = ultimogiornomese.AddMonths(1);
             }
 
             return ret;

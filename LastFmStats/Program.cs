@@ -8,6 +8,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Diagnostics;
 using System.Threading;
 using System.CodeDom;
+using System.Globalization;
 
 namespace LastFmStats
 {
@@ -27,6 +28,7 @@ namespace LastFmStats
                     Scrobbles.Add(new Scrobble(campi[0], campi[1], campi[2], campi[3]));
                 }
             }
+            Scrobbles.RemoveAll(c => c.Data == new DateTime(1, 1, 1));
             while (true)
             {
                 Console.WriteLine("S - Statistiche Generali");
@@ -54,7 +56,6 @@ namespace LastFmStats
 
         private static void ClassificaPeriodiSeiMesi()
         {
-            Scrobbles.RemoveAll(c => c.Data == new DateTime(1, 1, 1));
             var inizio = Scrobbles.Select(c => c.Data).Min();
             var fine = Scrobbles.Select(c => c.Data).Max();
             var numgiorni = (fine - inizio).Days;
@@ -129,10 +130,18 @@ namespace LastFmStats
         {
             Console.WriteLine("Inserisci prima data del range (GG/MM/AAAA)");
             var partenza = GetInput();
-            var datapartenza = DateTime.Parse(partenza);
+            DateTime datapartenza;
+            if (string.IsNullOrEmpty(partenza))
+                datapartenza = Scrobbles.Select(c => c.Data).Min();
+            else
+                datapartenza = DateTime.Parse(partenza);
             Console.WriteLine("Inserisci seconda data del range (GG/MM/AAAA)");
             var arrivo = GetInput();
-            var dataarrivo = DateTime.Parse(arrivo);
+            DateTime dataarrivo;
+            if (string.IsNullOrEmpty(arrivo))
+                dataarrivo = Scrobbles.Select(c => c.Data).Max();
+            else
+                dataarrivo = DateTime.Parse(arrivo);
             var scrobbleintorange = Scrobbles.Where(c => c.Data <= dataarrivo && c.Data >= datapartenza).ToList();
             Console.WriteLine("Numero di canzoni :" + scrobbleintorange.Count);
             var numgiorni = (dataarrivo - datapartenza).Days;
@@ -164,10 +173,24 @@ namespace LastFmStats
                     count++;
                 }
             }
+            Console.WriteLine("******************SETTIMANE VIRTUOSI*********************");
+
+            //giorni virtuoso
+            var ISettimane = scrobbleintorange.GroupBy(c => c.Data.Date.Year.ToString() + CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(c.Data,CalendarWeekRule.FirstDay,DayOfWeek.Friday).ToString("00")).OrderByDescending(c => c.Count()).Take(10);
+            count = 1;
+            foreach (var ISettimana in ISettimane)
+            {
+                if (ISettimana != null)
+                {
+                    var settimana = ISettimana.Key;
+                    Console.WriteLine("Giorno più virtuoso #{2}: {0} ({1} ascolti)", settimana, ISettimana.Count(), count.ToString());
+                    count++;
+                }
+            }
             Console.WriteLine("******************MESI VIRTUOSI*********************");
 
             //giorni virtuoso
-            var IMESI = scrobbleintorange.GroupBy(c => c.Data.Date.Year.ToString() + c.Data.Date.Month.ToString()).OrderByDescending(c => c.Count()).Take(10);
+            var IMESI = scrobbleintorange.GroupBy(c => c.Data.Date.Year.ToString() + c.Data.Date.Month.ToString("00")).OrderByDescending(c => c.Count()).Take(10);
             count = 1;
             foreach (var IMese in IMESI)
             {
@@ -197,7 +220,8 @@ namespace LastFmStats
             var aps = GetArtistiPerSettimana(scrobbleintorange, out apsheader);
             var apm = GetArtistiPerMese(scrobbleintorange);
             Console.WriteLine("******************WEEKLY ARTISTS**********************");
-            PrintArrayString(apsheader, aps);
+            foreach (var el in aps)
+                Console.WriteLine(el);
             Console.WriteLine("******************MONTHLY ARTISTS*********************");
             foreach (var el in apm)
                 Console.WriteLine(el);
@@ -256,7 +280,7 @@ namespace LastFmStats
             return new DateTime(s.Year, s.Month, s.Day, valore, s.Minute, s.Second);
         }
 
-        private static string[] GetArtistiPerSettimana(IEnumerable<Scrobble> scrobbles, out string[] apsheader)
+        private static List<Chartelement> GetArtistiPerSettimana(IEnumerable<Scrobble> scrobbles, out string[] apsheader)
         {
             var max = scrobbles.Select(c => c.Data).Max();
             var min = scrobbles.Select(c => c.Data).Min();
@@ -265,17 +289,23 @@ namespace LastFmStats
                 primogiornosettimana = primogiornosettimana.AddDays(-1);
             var ultimogiornosettimana = primogiornosettimana.AddDays(7);
             var getnumsettimane = (max - min).Days / 7 + 1;
-            var ret = new string[getnumsettimane];
+            var ret = new List<Chartelement>();
             apsheader = new string[getnumsettimane];
             for(int i = 0; i < getnumsettimane; i++)
             {
-                apsheader[i] = primogiornosettimana.ToString("dd/MM/yyyy")+"-"+ ultimogiornosettimana.ToString("dd/MM/yyyy");
+                var elem = new Chartelement();
+                elem.Header = primogiornosettimana.ToString("dd/MM/yyyy")+"-"+ ultimogiornosettimana.ToString("dd/MM/yyyy");
                 var a = scrobbles.Where(c => c.Data >= primogiornosettimana && c.Data < ultimogiornosettimana)
                     .GroupBy(c => c.Artist)
                     .OrderByDescending(c => c.Count())
                     .FirstOrDefault();
                 if (a != null)
-                    ret[i] = a.Select(c => c.Artist).FirstOrDefault();
+                {
+                    elem.Artist = a.Select(c => c.Artist).FirstOrDefault();
+                    elem.TotalArtist = a.Where(c => c.Artist == elem.Artist).Count();
+                }
+                elem.TotalListening = scrobbles.Where(c => c.Data >= primogiornosettimana && c.Data < ultimogiornosettimana).Count();
+                ret.Add(elem);
                 primogiornosettimana = primogiornosettimana.AddDays(7);
                 ultimogiornosettimana = ultimogiornosettimana.AddDays(7);
             }

@@ -34,6 +34,7 @@ namespace LastFmStats
                 Console.WriteLine("S - Statistiche Generali");
                 Console.WriteLine("P - Classifica periodi di 6 mesi");
                 Console.WriteLine("R - Ricerca per traccia");
+                Console.WriteLine("A - Ricerca per artista");
                 Console.WriteLine("RA - Ricerca per album");
                 var scelta = Console.ReadLine();
                 switch (scelta.ToUpper())
@@ -49,6 +50,9 @@ namespace LastFmStats
                         break;
                     case "RA":
                         MenuRicercaPerAlbum();
+                        break;
+                    case "A":
+                        MenuRicercaPerArtista();
                         break;
                 }
             }
@@ -111,6 +115,15 @@ namespace LastFmStats
             Console.Write("Inserisci query di ricerca: ");
             var query = Console.ReadLine();
             var trova = Scrobbles.Where(c => c.Album.ToUpper().Contains(query.ToUpper())).ToList();
+            Console.WriteLine("Trovati {0} scrobbles", trova.Count);
+            foreach (var s in trova)
+                Console.WriteLine("{0}   {1} - {2}", s.Data.ToString("dd/MM/yyyy HH:mm:ss"), s.Artist, s.Track);
+        }
+        private static void MenuRicercaPerArtista()
+        {
+            Console.Write("Inserisci query di ricerca: ");
+            var query = Console.ReadLine();
+            var trova = Scrobbles.Where(c => c.Artist.ToUpper().Contains(query.ToUpper())).ToList();
             Console.WriteLine("Trovati {0} scrobbles", trova.Count);
             foreach (var s in trova)
                 Console.WriteLine("{0}   {1} - {2}", s.Data.ToString("dd/MM/yyyy HH:mm:ss"), s.Artist, s.Track);

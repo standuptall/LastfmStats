@@ -4,3 +4,9 @@ C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Debug\LastFmS
 C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Debug\LastFmStats.csproj.CoreCompileInputs.cache
 C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Debug\LastFmStats.exe
 C:\Users\Alberto\Google Drive\PROGETTI\LastFmStats\LastFmStats\obj\Debug\LastFmStats.pdb
+C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\bin\Debug\LastFmStats.exe
+C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\bin\Debug\LastFmStats.pdb
+C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csprojAssemblyReference.cache
+C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.CoreCompileInputs.cache
+C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\obj\Debug\LastFmStats.exe
+C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\obj\Debug\LastFmStats.pdb

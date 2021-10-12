@@ -97,7 +97,7 @@ namespace LastFmStats
                     if (data == null) Console.Write("retry...");
                 }
                 newList.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)))));
-                File.WriteAllText("data.json", JsonConvert.SerializeObject(newList));
+                File.WriteAllText("data.json", JsonConvert.SerializeObject(newList, Formatting.Indented));
                 File.WriteAllText("aggiorna.json", JsonConvert.SerializeObject(page));
                 var perc = page * 100 / total_pages;
                 if (oldperc != perc)
@@ -122,7 +122,7 @@ namespace LastFmStats
                 return;
             data.RemoveAll(c => c.date == null);
             Scrobbles.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)))));
-            File.WriteAllText("data.json", JsonConvert.SerializeObject(Scrobbles));
+            File.WriteAllText("data.json", JsonConvert.SerializeObject(Scrobbles,Formatting.Indented));
             Console.WriteLine("Aggiunte " + data.Count + " nuove tracce");
         }
         private static void ClassificaPeriodiSeiMesi()

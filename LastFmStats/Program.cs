@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.CodeDom;
 using System.Globalization;
+using Newtonsoft.Json;
 
 namespace LastFmStats
 {
@@ -17,20 +18,28 @@ namespace LastFmStats
         static List<Scrobble> Scrobbles = new List<Scrobble>();
         static void Main(string[] args)
         {
-            Console.WriteLine("Inserisci il file");
-            var file = GetInput();
-            var righe = File.ReadAllLines(file);
-            foreach (var riga in righe)
+            //Console.WriteLine("Inserisci il file");
+            //var file = GetInput();
+            //var righe = File.ReadAllLines(file);
+            //foreach (var riga in righe)
+            //{
+            //    var campi = riga.Split(',');
+            //    if (campi.Length >= 4)
+            //    {
+            //        Scrobbles.Add(new Scrobble(campi[0], campi[1], campi[2], campi[3]));
+            //    }
+            //}
+            if (File.Exists("data.json"))
             {
-                var campi = riga.Split(',');
-                if (campi.Length >= 4)
-                {
-                    Scrobbles.Add(new Scrobble(campi[0], campi[1], campi[2], campi[3]));
-                }
+
+                Scrobbles = JsonConvert.DeserializeObject<List<Scrobble>>(File.ReadAllText("data.json"));
+                Console.WriteLine("Scrobbles caricati correttamente");
             }
             Scrobbles.RemoveAll(c => c.Data == new DateTime(1, 1, 1));
             while (true)
             {
+                Console.WriteLine("AG - Aggiorna");
+                Console.WriteLine("AD - Aggiorna Differenziale");
                 Console.WriteLine("S - Statistiche Generali");
                 Console.WriteLine("P - Classifica periodi di 6 mesi");
                 Console.WriteLine("R - Ricerca per traccia");
@@ -41,6 +50,12 @@ namespace LastFmStats
                 {
                     case "S":
                         MenuStatisticheGenerali();
+                        break;
+                    case "AG":
+                        Aggiorna();
+                        break;
+                    case "AD":
+                        AggiornaDifferenziale();
                         break;
                     case "P":
                         ClassificaPeriodiSeiMesi();
@@ -57,7 +72,59 @@ namespace LastFmStats
                 }
             }
         }
+        private static void Aggiorna()
+        {
+            var token = "974a5ebc077564f72bd639d122479d4b";
+            var user = "otrebla86";
+            var info = ApiHelper.GetUserInfo(user, token);
+            var limit = 25;
+            var total_pages = info.playcount / limit + 1;
+            List<Scrobble> newList = new List<Scrobble>();
+            long oldperc = 0;
+            int start = 1;
+            if (File.Exists("aggiorna.json"))
+            {
+                start = JsonConvert.DeserializeObject<int>(File.ReadAllText("aggiorna.json"));
+                newList = JsonConvert.DeserializeObject<List<Scrobble>>(File.ReadAllText("data.json"));
+            }
+            for (int page = start; page <= total_pages; page++)
+            {
+                List<Track> data = null;
+                while (data == null)
+                {
+                    data = ApiHelper.GetTracks(token, user, limit, page).Result;
+                    data.RemoveAll(c => c.date == null);
+                    if (data == null) Console.Write("retry...");
+                }
+                newList.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)))));
+                File.WriteAllText("data.json", JsonConvert.SerializeObject(newList));
+                File.WriteAllText("aggiorna.json", JsonConvert.SerializeObject(page));
+                var perc = page * 100 / total_pages;
+                if (oldperc != perc)
+                {
+                    Console.Write(perc + "%...");
+                    oldperc = perc;
+                }
+            }
+            Scrobbles = newList;
+        }
+        private static void AggiornaDifferenziale()
+        {
+            var token = "974a5ebc077564f72bd639d122479d4b";
+            var user = "otrebla86";
+            var info = ApiHelper.GetUserInfo(user, token);
+            var limit = 1000;
+            var from = Scrobbles.OrderByDescending(c => c.Data).Take(1).FirstOrDefault().Data;
 
+
+            List<Track> data = ApiHelper.GetTracksFromDate(token, user, limit, from).Result;
+            if (data == null)
+                return;
+            data.RemoveAll(c => c.date == null);
+            Scrobbles.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)))));
+            File.WriteAllText("data.json", JsonConvert.SerializeObject(Scrobbles));
+            Console.WriteLine("Aggiunte " + data.Count + " nuove tracce");
+        }
         private static void ClassificaPeriodiSeiMesi()
         {
             var inizio = Scrobbles.Select(c => c.Data).Min();

@@ -10,3 +10,13 @@ C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\ob
 C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.CoreCompileInputs.cache
 C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\obj\Debug\LastFmStats.exe
 C:\Users\azich\Documents\Programmazione\Last-fm-stats\LastfmStats\LastFmStats\obj\Debug\LastFmStats.pdb
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\LastFmStats.exe
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\LastFmStats.pdb
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Newtonsoft.Json.dll
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Newtonsoft.Json.xml
+C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.AssemblyReference.cache
+C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.CoreCompileInputs.cache
+C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.CopyComplete
+C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.exe
+C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.pdb
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\LastFmStats.exe.config

@@ -8,6 +8,10 @@ namespace LastFmStats
 {
     public class Scrobble
     {
+        public Scrobble()
+        {
+
+        }
         public Scrobble(string artist, string album, string track, string data)
         {
             this.Artist = artist;
@@ -22,10 +26,24 @@ namespace LastFmStats
 
             }
         }
+        public Scrobble(string artist, string album, string track, DateTime data)
+        {
+            this.Artist = artist;
+            this.Album = album;
+            this.Track = track;
+            try
+            {
+                this.Data = data;
+            }
+            catch
+            {
 
-        public string Artist { get; private set; }
-        public string Album { get; private set; }
-        public string Track { get; private set; }
-        public DateTime Data { get; private set; }
+            }
+        }
+
+        public string Artist { get; set; }
+        public string Album { get; set; }
+        public string Track { get; set; }
+        public DateTime Data { get; set; }
     }
 }

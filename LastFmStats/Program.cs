@@ -114,7 +114,7 @@ namespace LastFmStats
             var user = "otrebla86";
             var info = ApiHelper.GetUserInfo(user, token);
             var limit = 1000;
-            var from = Scrobbles.OrderByDescending(c => c.Data).Take(1).FirstOrDefault().Data;
+            var from = Scrobbles.OrderByDescending(c => c.Data).Take(1).FirstOrDefault().Data.AddSeconds(1);
 
 
             List<Track> data = ApiHelper.GetTracksFromDate(token, user, limit, from).Result;
@@ -122,6 +122,7 @@ namespace LastFmStats
                 return;
             data.RemoveAll(c => c.date == null);
             Scrobbles.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)))));
+            Scrobbles = Scrobbles.OrderByDescending(c => c.Data).ToList();
             File.WriteAllText("data.json", JsonConvert.SerializeObject(Scrobbles,Formatting.Indented));
             Console.WriteLine("Aggiunte " + data.Count + " nuove tracce");
         }

@@ -264,7 +264,7 @@ namespace LastFmStats
                 if (ISettimana != null)
                 {
                     var settimana = ISettimana.Key;
-                    Console.WriteLine("Giorno più virtuoso #{2}: {0} ({1} ascolti)", settimana, ISettimana.Count(), count.ToString());
+                    Console.WriteLine("Settimana più virtuosa #{2}: {0} ({1} ascolti)", settimana, ISettimana.Count(), count.ToString());
                     count++;
                 }
             }
@@ -278,7 +278,7 @@ namespace LastFmStats
                 if (IMese != null)
                 {
                     var mese = IMese.Key;
-                    Console.WriteLine("Giorno più virtuoso #{2}: {0} ({1} ascolti)", mese, IMese.Count(), count.ToString());
+                    Console.WriteLine("Mese più virtuoso #{2}: {0} ({1} ascolti)", mese, IMese.Count(), count.ToString());
                     count++;
                 }
             }
@@ -306,6 +306,20 @@ namespace LastFmStats
             Console.WriteLine("******************MONTHLY ARTISTS*********************");
             foreach (var el in apm)
                 Console.WriteLine(el);
+            Console.WriteLine("******************YEAR AGO*********************");
+            var year = DateTime.Now.Year;
+            var now = DateTime.Now;
+            for (int i = 2005; i <= year; i++)
+            {
+                Console.WriteLine("====================="+i+ "=====================:");
+                string[] tya = GetYearsAgo(year-i, now, true); //tracce
+                string[] aya = GetYearsAgo(year -i, now, false); //artisti
+                foreach (var t in tya)
+                    Console.WriteLine(t);
+                foreach (var ay in aya)
+                    Console.Write(ay + ",");
+                Console.WriteLine("");
+            }
             Console.ReadLine();
         }
 
@@ -468,6 +482,39 @@ namespace LastFmStats
             if (data >= d1 && data <= d2)
                 return 2;
             return 1;
+        }
+
+        private static string[] GetYearsAgo(int yearago, DateTime now, bool mode)
+        {
+            var ret = new List<string>();
+            var finestratemporale = 0;
+            if (mode)
+            {
+                finestratemporale = 1; //in ore
+                var addend = 0;
+                while (ret.Count < 10)
+                {
+                    var finspan = TimeSpan.FromHours(1 + addend);
+                    ret = Scrobbles.Where(c => c.Data > now.AddYears(-yearago).AddHours(-finspan.TotalHours) && c.Data < now.AddYears(-yearago).AddHours(finspan.TotalHours)).Select(c => string.Format("{0} {1} - {2}", (NormalizzaData(c.Data)).ToString("dd/MM/yyyy HH:mm:ss"), c.Artist, c.Track)).ToList();
+                    addend++;
+                }
+            }
+            else
+            {
+                finestratemporale = 1; //in ore
+                var addend = 0;
+                while (ret.Count < 10)
+                {
+                    var finspan = TimeSpan.FromHours(1 + addend);
+                    ret = Scrobbles.Where(c => c.Data > now.AddYears(-yearago).AddHours(-finspan.TotalHours) && c.Data < now.AddYears(-yearago).AddHours(finspan.TotalHours))
+                        .Select(c => c.Artist).Distinct().ToList();
+                    addend++;
+                }
+            }
+            return ret.ToArray();
+            
+
+            
         }
 
     }

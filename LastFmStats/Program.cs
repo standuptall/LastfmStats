@@ -10,6 +10,12 @@ using System.Threading;
 using System.CodeDom;
 using System.Globalization;
 using Newtonsoft.Json;
+using System.Collections;
+using Microsoft.ML;
+using Microsoft.ML.Data;
+using Microsoft.ML.Trainers;
+using System.Runtime.Remoting.Contexts;
+using Microsoft.ML.Transforms.Text;
 
 namespace LastFmStats
 {
@@ -45,6 +51,8 @@ namespace LastFmStats
                 Console.WriteLine("R - Ricerca per traccia");
                 Console.WriteLine("A - Ricerca per artista");
                 Console.WriteLine("RA - Ricerca per album");
+                Console.WriteLine("SA - Statistiche per Artista");
+                Console.WriteLine("AS - Trova artisti simili");
                 var scelta = Console.ReadLine();
                 switch (scelta.ToUpper())
                 {
@@ -69,13 +77,64 @@ namespace LastFmStats
                     case "A":
                         MenuRicercaPerArtista();
                         break;
+                    case "SA":
+                        StatistichePerArtista();
+                        break;
+                    case "AS":
+                        TrovaArtistiSimili();
+                        break;
                 }
             }
         }
+
+        private static void TrovaArtistiSimili()
+        {
+            var trova = Scrobbles.Select(d=>d.Artist).Distinct().ToList();
+            HierarchicalClustering.elaborate(trova);
+        }
+
+        private static void StatistichePerArtista()
+        {
+            Console.Write("Inserisci nome artista: ");
+            var query = Console.ReadLine();
+            var trova = Scrobbles.Where(c => c.Artist.ToUpper().Contains(query.ToUpper())).ToList();
+            Console.WriteLine("Trovati {0} scrobbles", trova.Count);
+            var eccoli = trova.GroupBy(d => d.Track.ToLower()).OrderByDescending(d=>d.Count());
+            foreach (var s in eccoli)
+                Console.WriteLine("{0} ({1})", s.Key,s.Count());
+            PrintYearStatistics(trova);
+            
+             
+
+        }
+
+        private static void PrintYearStatistics(List<Scrobble> trova)
+        {
+            var starty = trova.Select(c => c.Data.Year).Min();
+            List<KeyValuePair<int, int>> anni = new List<KeyValuePair<int, int>>();
+            for (var anno = starty; anno <= DateTime.Now.Year; anno++)
+            {
+                var scobbly = trova.Where(d => d.Data.Year.Equals(anno)).Count();
+                anni.Add(new KeyValuePair<int, int>(anno, scobbly));
+            }
+            var max = anni.Select(d => d.Value).Max();
+            foreach (var kk in anni)
+            {
+                Console.Write("{0} ", kk.Key);
+                var numm = kk.Value * 100 / max;
+                for (var i = 0; i < numm; i++)
+                {
+                    Console.Write("▮");
+                }
+                Console.WriteLine(" "+ kk.Value);
+            }
+        }
+
         private static void Aggiorna()
         {
             var token = "974a5ebc077564f72bd639d122479d4b";
             var user = "otrebla86";
+            ApiHelper apiHelper = new ApiHelper();
             var info = ApiHelper.GetUserInfo(user, token);
             var limit = 25;
             var total_pages = info.playcount / limit + 1;
@@ -93,10 +152,14 @@ namespace LastFmStats
                 while (data == null)
                 {
                     data = ApiHelper.GetTracks(token, user, limit, page).Result;
+                    foreach(var song in data)
+                    {
+                        song.duration = apiHelper.GetSongDuration(song.artist.name, song.name, token);
+                    }
                     data.RemoveAll(c => c.date == null);
                     if (data == null) Console.Write("retry...");
                 }
-                newList.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)))));
+                newList.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)),c.duration)));
                 File.WriteAllText("data.json", JsonConvert.SerializeObject(newList, Formatting.Indented));
                 File.WriteAllText("aggiorna.json", JsonConvert.SerializeObject(page));
                 var perc = page * 100 / total_pages;
@@ -121,7 +184,7 @@ namespace LastFmStats
             if (data == null)
                 return;
             data.RemoveAll(c => c.date == null);
-            Scrobbles.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)))));
+            Scrobbles.AddRange(data.Select(c => new Scrobble(c.artist.name, c.album.name, c.name, (c.date?.date ?? new DateTime(0, 0, 0)),c.duration)));
             Scrobbles = Scrobbles.OrderByDescending(c => c.Data).ToList();
             File.WriteAllText("data.json", JsonConvert.SerializeObject(Scrobbles,Formatting.Indented));
             Console.WriteLine("Aggiunte " + data.Count + " nuove tracce");
@@ -191,10 +254,36 @@ namespace LastFmStats
         {
             Console.Write("Inserisci query di ricerca: ");
             var query = Console.ReadLine();
-            var trova = Scrobbles.Where(c => c.Artist.ToUpper().Contains(query.ToUpper())).ToList();
-            Console.WriteLine("Trovati {0} scrobbles", trova.Count);
-            foreach (var s in trova)
-                Console.WriteLine("{0}   {1} - {2}", s.Data.ToString("dd/MM/yyyy HH:mm:ss"), s.Artist, s.Track);
+            var mlContext = new MLContext(seed: 0);
+            var options = new TextFeaturizingEstimator.Options
+            {
+                StopWordsRemoverOptions = null, // Set to null to leave stop words intact
+                KeepNumbers = true, // Default == false
+                WordFeatureExtractor = new WordBagEstimator.Options { NgramLength = 2 },
+                CaseMode = TextNormalizingEstimator.CaseMode.None // Default = Lower
+            };
+            var featurizer = mlContext.Transforms.Text.FeaturizeText("Features", options, "Text");
+            var data = mlContext.Data.LoadFromEnumerable(Scrobbles.Select(d => d.Artist));
+            var transformedText = featurizer.Fit(data).Transform(data);
+            IDataView trainingData = transformedText;
+            // Define trainer options.
+            var optionss = new KMeansTrainer.Options
+            {
+                NumberOfClusters = 3065,
+                OptimizationTolerance = 1e-6f,
+                NumberOfThreads = 1
+            };
+            var pipeline = mlContext.Clustering.Trainers.KMeans(optionss);
+
+            // Train the model.
+            var model = pipeline.Fit(trainingData);
+            VBuffer<float>[] centroids = default;
+
+            var modelParams = model.Model;
+            modelParams.GetClusterCentroids(ref centroids, out int k);
+            //Console.WriteLine("Trovati {0} scrobbles", trova.Count);
+            //foreach (var s in trova)
+            //    Console.WriteLine("{0}   {1} - {2}", s.Data.ToString("dd/MM/yyyy HH:mm:ss"), s.Artist, s.Track);
         }
 
         private static void MenuRicercaPerTraccia()
@@ -205,6 +294,7 @@ namespace LastFmStats
             Console.WriteLine("Trovati {0} scrobbles", trova.Count);
             foreach (var s in trova)
                 Console.WriteLine("{0}   {1} - {2}", s.Data.ToString("dd/MM/yyyy HH:mm:ss"), s.Artist, s.Track);
+            PrintYearStatistics(trova);
         }
 
         private static void MenuStatisticheGenerali()
@@ -240,6 +330,11 @@ namespace LastFmStats
             Console.WriteLine("Artista più ascoltato: " + artista);
             Console.WriteLine("Album più ascoltato: " + albumpiasc);
             Console.WriteLine("Traccia più ascoltata: " + tracciapiasc);
+            PrintYearStatistics(scrobbleintorange);
+            Console.WriteLine("******************YEAR CHART*********************");
+            var anni = scrobbleintorange.Select(c => c.Data.Year).Distinct();
+            foreach(var anno in anni)
+                Console.WriteLine("{0} -> {1}", anno, scrobbleintorange.Where(c=>c.Data.Year == anno).Count());
             Console.WriteLine("******************GIORNI VIRTUOSI*********************");
 
             //giorni virtuoso
@@ -309,11 +404,12 @@ namespace LastFmStats
             Console.WriteLine("******************YEAR AGO*********************");
             var year = DateTime.Now.Year;
             var now = DateTime.Now;
-            for (int i = 2005; i <= year; i++)
+            var starty = scrobbleintorange.Select(c => c.Data.Year).Min();
+            for (int i = starty; i <= year; i++)
             {
                 Console.WriteLine("====================="+i+ "=====================:");
-                string[] tya = GetYearsAgo(year-i, now, true); //tracce
-                string[] aya = GetYearsAgo(year -i, now, false); //artisti
+                string[] tya = GetYearsAgo(scrobbleintorange,year - i, now, true); //tracce
+                string[] aya = GetYearsAgo(scrobbleintorange,year - i, now, false); //artisti
                 foreach (var t in tya)
                     Console.WriteLine(t);
                 foreach (var ay in aya)
@@ -328,6 +424,9 @@ namespace LastFmStats
             var max = scrobbles.Select(c => c.Data).Max();
             var min = scrobbles.Select(c => c.Data).Min();
             var primogiornomese = min;
+            primogiornomese = primogiornomese.AddHours(-primogiornomese.Hour);
+            primogiornomese = primogiornomese.AddMinutes(-primogiornomese.Minute);
+            primogiornomese = primogiornomese.AddSeconds(-primogiornomese.Second);
             while ((int)primogiornomese.Day != 1)
                 primogiornomese = primogiornomese.AddDays(-1);
             var ultimogiornomese = primogiornomese.AddMonths(1);
@@ -380,6 +479,10 @@ namespace LastFmStats
             var max = scrobbles.Select(c => c.Data).Max();
             var min = scrobbles.Select(c => c.Data).Min();
             var primogiornosettimana = min;
+
+            primogiornosettimana = primogiornosettimana.AddHours(-primogiornosettimana.Hour);
+            primogiornosettimana = primogiornosettimana.AddMinutes(-primogiornosettimana.Minute);
+            primogiornosettimana = primogiornosettimana.AddSeconds(-primogiornosettimana.Second);
             while ((int)primogiornosettimana.DayOfWeek != 0)
                 primogiornosettimana = primogiornosettimana.AddDays(-1);
             var ultimogiornosettimana = primogiornosettimana.AddDays(7);
@@ -484,7 +587,7 @@ namespace LastFmStats
             return 1;
         }
 
-        private static string[] GetYearsAgo(int yearago, DateTime now, bool mode)
+        private static string[] GetYearsAgo(IEnumerable<Scrobble> Scrobbles, int yearago, DateTime now, bool mode)
         {
             var ret = new List<string>();
             var finestratemporale = 0;

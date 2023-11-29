@@ -12,6 +12,8 @@ namespace LastFmStats
 {
     public class ApiHelper
     {
+        private List<TrackInfoResponse> _tracks = new List<TrackInfoResponse>();
+
         public static UserInfo GetUserInfo(string user, string token)
         {
             try
@@ -35,6 +37,43 @@ namespace LastFmStats
             catch(Exception ex)
             {
                 return null;
+            }
+        }
+        public int GetSongDuration(string artist, string track,string token)
+        {
+            var trova = this._tracks.Where(c=>c.track.artist.name.Trim().ToLower().Equals(artist.Trim().ToLower())
+            && c.track.name.Trim().ToLower().Equals(track.Trim().ToLower())
+            ).FirstOrDefault();
+            if (trova != null)
+                return int.Parse(trova.track.duration);
+            try
+            {
+                int ret = 0;
+                artist = artist.Replace(" ", "+");
+                track = track.Replace(" ", "+");
+                var urlinfo = $"https://ws.audioscrobbler.com/2.0/?method=track.getinfo&artist={artist}&api_key={token}&track={track}&format=json";
+                var http = WebRequest.CreateDefault(new Uri(urlinfo));
+                http.Method = "GET";
+                var response = http.GetResponse();
+                Stream s = response.GetResponseStream();
+                List<byte> uj = new List<byte>();
+                byte[] res = new byte[1024];
+                while (s.Read(res, 0, 1024) > 0)
+                {
+                    uj.AddRange(res);
+                }
+                var st = Encoding.UTF8.GetString(uj.ToArray());
+                var ress = JsonConvert.DeserializeObject<TrackInfoResponse>(st);
+                if (ress!=null && ress.track != null)
+                {
+                    this._tracks.Add(ress);
+                    return int.Parse(ress.track.duration);
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                return 0;
             }
         }
 
@@ -115,6 +154,7 @@ namespace LastFmStats
         public string name { get; set; }
         public StructData album { get; set; }
         public DateTS date { get; set; }
+        public int duration { get; set; }
 
     }
     public class DateTS
@@ -145,6 +185,20 @@ namespace LastFmStats
     }
     public class UserInfoResponse
     {
-        public UserInfo user {get;set;}
+        public UserInfo user { get; set; }
+    }
+    public class TrackInfoResponse
+    {
+        public TrackInfoInner track { get; set; }
+    }
+    public class TrackInfoInner
+    {
+        public string name { get; set; }
+        public TrackArtist artist { get; set; }
+        public  string duration { get; set; }
+    }
+    public class TrackArtist
+    {
+        public string name { get; set; }
     }
 }

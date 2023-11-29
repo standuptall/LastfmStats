@@ -26,11 +26,12 @@ namespace LastFmStats
 
             }
         }
-        public Scrobble(string artist, string album, string track, DateTime data)
+        public Scrobble(string artist, string album, string track, DateTime data,int duration)
         {
             this.Artist = artist;
             this.Album = album;
             this.Track = track;
+            this.Duration = duration;
             try
             {
                 this.Data = data;
@@ -45,5 +46,6 @@ namespace LastFmStats
         public string Album { get; set; }
         public string Track { get; set; }
         public DateTime Data { get; set; }
+        public int Duration { get; set; }
     }
 }

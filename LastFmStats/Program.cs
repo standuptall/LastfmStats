@@ -262,21 +262,22 @@ namespace LastFmStats
                 WordFeatureExtractor = new WordBagEstimator.Options { NgramLength = 2 },
                 CaseMode = TextNormalizingEstimator.CaseMode.None // Default = Lower
             };
-            var featurizer = mlContext.Transforms.Text.FeaturizeText("Features", options, "Text");
-            var data = mlContext.Data.LoadFromEnumerable(Scrobbles.Select(d => d.Artist));
-            var transformedText = featurizer.Fit(data).Transform(data);
+            var textPipeline = mlContext.Transforms.Text.FeaturizeText("Features",
+                "Text");
+            var data = mlContext.Data.LoadFromEnumerable(Scrobbles.Select(d => new  { Text = d.Artist }));
+            var transformedText = textPipeline.Fit(data).Transform(data);
             IDataView trainingData = transformedText;
             // Define trainer options.
             var optionss = new KMeansTrainer.Options
             {
                 NumberOfClusters = 3065,
                 OptimizationTolerance = 1e-6f,
-                NumberOfThreads = 1
+                NumberOfThreads = 4
             };
             var pipeline = mlContext.Clustering.Trainers.KMeans(optionss);
 
             // Train the model.
-            var model = pipeline.Fit(trainingData);
+            var model = pipeline.Fit(data);
             VBuffer<float>[] centroids = default;
 
             var modelParams = model.Model;

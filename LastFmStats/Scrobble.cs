@@ -6,6 +6,12 @@ using System.Text;
 
 namespace LastFmStats
 {
+    public class ScrobbleCollection
+    {
+        public string monthTag { get; set; }
+        public List<Scrobble> scrobbles { get; set; }
+
+    }
     public class Scrobble
     {
         public Scrobble()

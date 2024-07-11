@@ -16,7 +16,6 @@ C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Newtonsoft.Json.dll
 C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Newtonsoft.Json.xml
 C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.AssemblyReference.cache
 C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.CoreCompileInputs.cache
-C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.CopyComplete
 C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.exe
 C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.pdb
 C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\LastFmStats.exe.config
@@ -59,5 +58,8 @@ C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\System.Numerics.Vectors.
 C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
 C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\System.Threading.Channels.xml
 C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\System.Threading.Tasks.Extensions.xml
-C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.csproj.SuggestedBindingRedirects.cache
-C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmStats.exe.config
+C:\Progetti\Personali\LastfmStats\LastFmStats\obj\Debug\LastFmSt.E6112636.Up2Date
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Renci.SshNet.dll
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Microsoft.Bcl.AsyncInterfaces.xml
+C:\Progetti\Personali\LastfmStats\LastFmStats\bin\Debug\Renci.SshNet.xml
